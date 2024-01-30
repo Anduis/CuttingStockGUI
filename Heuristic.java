@@ -1,20 +1,7 @@
-import java.util.*;
-
-class Rectangle {
-  int id;
-  int width;
-  int height;
-
-  public Rectangle(int id, int width, int height) {
-    this.id = id;
-    this.width = width;
-    this.height = height;
-  }
-
-}
+import java.util.Arrays;
+import java.util.List;
 
 public class Heuristic {
-
   public static void main(String[] args) {
     List<Rectangle> rectangles = Arrays.asList(
         new Rectangle(1, 2, 2),
@@ -24,15 +11,35 @@ public class Heuristic {
         new Rectangle(5, 2, 3),
         new Rectangle(6, 2, 2),
         new Rectangle(7, 4, 1));
+    int[] perm1 = { 1, 2, 3, 4, 5, 6, 7 };
+    int[] perm2 = { 1, 3, 4, 5, 2, 6, 7 };
+
+    Individual individual1 = new Individual(perm1);
+    Individual individual2 = new Individual(perm2);
 
     int materialWidth = 8;
     int materialHeight = 6;
+
+    int[][] material = new int[materialHeight][materialWidth];
+
+    material = getPattern(individual1, rectangles, materialWidth, materialHeight);
+    individual1.setFitness(fitnessFunction(material));
+    printMaterial(material);
+
+    material = getPattern(individual2, rectangles, materialWidth, materialHeight);
+    individual2.setFitness(fitnessFunction(material));
+    printMaterial(material);
+
+  }
+
+  private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
+      int materialHeight) {// no contempla que no quepa
     int[][] material = new int[materialHeight][materialWidth];
     DoubleLinkedList list = new DoubleLinkedList();
     list.addFirst(0, 0);
     Node pos = list.head;
-
-    for (Rectangle rectangle : rectangles)
+    for (int rectId : individual.permutation) {
+      Rectangle rectangle = rectangles.get(rectId - 1);
       while (pos != null)
         if (fits(material, pos, rectangle, list)) {
           int[] xy = placeRectangle(material, pos.x, pos.y, rectangle);
@@ -42,56 +49,78 @@ public class Heuristic {
           break;
         } else {
           pos = list.tail;
-          while (!fits(material, pos, rectangle, list))
-            pos = pos.prev;
+          if (pos != null) {
+            while (!fits(material, pos, rectangle, list)) {
+              pos = pos.prev;
+              if (pos == null)
+                break;
+            }
+          } else
+            System.out.println("asdasdasd");
         }
-    printMaterial(material);
-
+    }
+    return material;
   }
 
-  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// plenty sure there exists a more
-                                                                                      // elegant implementation
+  private static boolean esRenglonCero(int[] renglon) {
+    for (int valor : renglon)
+      if (valor != 0)
+        return false;
+
+    return true;
+  }
+
+  private static double fitnessFunction(int[][] material) {// no contempla los del lado izq
+    double totalArea = material[0].length * material.length;
+    double enclosedArea = 0;
+    for (int i = 0; i < material.length; i++)
+      for (int j = 0; j < material[0].length; j++) {
+        if (esRenglonCero(material[i]))
+          break;
+        if (material[i][j] == 0)
+          enclosedArea++;
+      }
+
+    double ans = ((enclosedArea / totalArea) * 100);
+    return ans;
+  }
+
+  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// Reestructurar esto
     int x = xy[0];
     int y = xy[1];
     if (xy[1] < material.length) {
-      if (x != 0) {
+      if (x != 0)
         while (material[xy[1]][x - 1] == 0 && x >= 0) {
           x--;
           if (x == 0)
             break;
         }
-      }
       if (x != xy[0])
         list.addFirst(x, xy[1]);
     }
     if (xy[0] < material[0].length) {
-      if (y != 0) {
+      if (y != 0)
         while (material[y - 1][xy[0]] == 0 && y >= 0) {
           y--;
           if (y == 0)
             break;
         }
-      }
       if (y != xy[1])
         list.addFirst(xy[0], y);
     }
   }
 
   private static boolean fits(int[][] material, Node pos, Rectangle rectangle, DoubleLinkedList list) {
-
     if (material[pos.y][pos.x] != 0) {
       list.delete(pos);
       return false;
     }
-
     if (pos.y + rectangle.height > material.length || pos.x + rectangle.width > material[0].length)
       return false;
-
     for (int i = pos.y; i < pos.y + rectangle.height; i++)
       for (int j = pos.x; j < pos.x + rectangle.width; j++)
         if (material[i][j] != 0)
           return false;
-
     return true;
   }
 

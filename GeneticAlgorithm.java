@@ -1,85 +1,35 @@
-import java.util.*;
-
-class Rectangle {// ok
-  int id;
-  int width;
-  int height;
-
-  public Rectangle(int id, int width, int height) {
-    this.id = id;
-    this.width = width;
-    this.height = height;
-  }
-}
-
-class Individual {
-  int[] permutation;
-  double fitness;
-
-  public Individual(int[] permutation) {
-    this.permutation = permutation;
-  }
-
-  public int[] getPermutation() {
-    return permutation;
-  }
-
-  void setFitness(double fitness) {
-    this.fitness = fitness;
-  }
-
-  public double getFitness() {
-    return fitness;
-  }
-}
-
-class Population {// ok
-  List<Individual> individuals;
-
-  public Population(int populationSize, int numberOfRectangles) {
-    individuals = new ArrayList<>();
-
-    for (int i = 0; i < populationSize; i++) {
-      int[] permutation = generateRandomPermutation(numberOfRectangles);
-      individuals.add(new Individual(permutation));
-    }
-  }
-
-  public List<Individual> getIndividuals() {
-    return individuals;
-  }
-
-  private int[] generateRandomPermutation(int size) {
-    List<Integer> permutation = new ArrayList<>();
-    for (int i = 1; i <= size; i++) {
-      permutation.add(i);
-    }
-
-    Collections.shuffle(permutation);
-
-    return permutation.stream().mapToInt(Integer::intValue).toArray();
-  }
-}
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class GeneticAlgorithm {
   public static void main(String[] args) {
     int populationSize = 100;
-    int numberOfGenerations = 100;
-    int numberOfRectangles = 3;
-    int materialWidth = 10;
-    int materialHeight = 10;
+    int numberOfGenerations = 2;
+    int materialWidth = 8;
+    int materialHeight = 6;
 
     List<Rectangle> rectangles = Arrays.asList(
-        new Rectangle(1, 2, 4),
-        new Rectangle(2, 5, 3),
-        new Rectangle(3, 8, 2));
+        new Rectangle(1, 2, 2),
+        new Rectangle(2, 3, 1),
+        new Rectangle(3, 1, 2),
+        new Rectangle(4, 1, 3),
+        new Rectangle(5, 2, 3),
+        new Rectangle(6, 2, 2),
+        new Rectangle(7, 4, 1));
 
-    Population population = new Population(populationSize, numberOfRectangles);
+    Population population = new Population(populationSize, rectangles.size());
+    int[][] material = new int[materialHeight][materialWidth];
 
     for (int generation = 0; generation < numberOfGenerations; generation++) {
       for (Individual individual : population.getIndividuals()) {
-        double fitness = fitnessFunction(individual, rectangles, materialWidth, materialHeight);
-        individual.setFitness(fitness);
+        System.out.println("-------------------------------------");
+        System.out.println("permutacion: " + Arrays.toString(individual.permutation));
+        material = getPattern(individual, rectangles, materialWidth, materialHeight);
+        individual.setFitness(fitnessFunction(material));
+        System.out.println("fitness :%" + individual.fitness);
+        printMaterial(material);
       }
 
       // selection, crossover, mutation
@@ -90,43 +40,122 @@ public class GeneticAlgorithm {
     // Retrieve the best individual from the final population
     sortPopulationByFitness(population.getIndividuals());
     Individual bestIndividual = population.getIndividuals().get(0);
-    System.out.println(bestIndividual.fitness);
+    System.out.println(bestIndividual.fitness + " mejor");
   }
 
   private static void sortPopulationByFitness(List<Individual> population) {
-    Collections.sort(population, Comparator.comparingDouble(Individual::getFitness).reversed());
+    Collections.sort(population, Comparator.comparingDouble(Individual::getFitness));
   }
 
-  public static double fitnessFunction(Individual individual, List<Rectangle> rectangles, int materialWidth,
+  private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
       int materialHeight) {
-    int[] permutation = individual.getPermutation();
-
     int[][] material = new int[materialHeight][materialWidth];
-
-    for (int rectId : permutation) {
+    DoubleLinkedList list = new DoubleLinkedList();
+    list.addFirst(0, 0);
+    Node pos = list.head;
+    for (int rectId : individual.permutation) {
       Rectangle rectangle = rectangles.get(rectId - 1);
-
+      while (pos != null)
+        if (fits(material, pos, rectangle, list)) {
+          int[] xy = placeRectangle(material, pos.x, pos.y, rectangle);
+          addExtremes(list, material, xy);
+          list.delete(pos);
+          pos = list.head;
+          break;
+        } else {
+          pos = list.tail;
+          if (pos != null) {
+            while (!fits(material, pos, rectangle, list)) {
+              pos = pos.prev;
+              if (pos == null)
+                break;
+            }
+          } else
+            System.out.println("asdasdasd");
+        }
     }
-
-    return 0;
+    return material;
   }
 
-  private static boolean fits(int[][] material, int row, int col, Rectangle rectangle) {
-    int rectWidth = rectangle.width;
-    int rectHeight = rectangle.height;
+  private static boolean esRenglonCero(int[] renglon) {
+    for (int valor : renglon)
+      if (valor != 0)
+        return false;
 
-    if (row + rectHeight > material.length || col + rectWidth > material[0].length) {
+    return true;
+  }
+
+  private static double fitnessFunction(int[][] material) {// no contempla los del lado izq
+    double totalArea = material[0].length * material.length;
+    double enclosedArea = 0;
+    for (int i = 0; i < material.length; i++)
+      for (int j = 0; j < material[0].length; j++) {
+        if (esRenglonCero(material[i]))
+          break;
+        if (material[i][j] == 0)
+          enclosedArea++;
+      }
+
+    double ans = ((enclosedArea / totalArea) * 100);
+    return ans;
+  }
+
+  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// Reestructurar esto
+    int x = xy[0];
+    int y = xy[1];
+    if (xy[1] < material.length) {
+      if (x != 0)
+        while (material[xy[1]][x - 1] == 0 && x >= 0) {
+          x--;
+          if (x == 0)
+            break;
+        }
+      if (x != xy[0])
+        list.addFirst(x, xy[1]);
+    }
+    if (xy[0] < material[0].length) {
+      if (y != 0)
+        while (material[y - 1][xy[0]] == 0 && y >= 0) {
+          y--;
+          if (y == 0)
+            break;
+        }
+      if (y != xy[1])
+        list.addFirst(xy[0], y);
+    }
+  }
+
+  private static boolean fits(int[][] material, Node pos, Rectangle rectangle, DoubleLinkedList list) {
+    if (material[pos.y][pos.x] != 0) {
+      list.delete(pos);
       return false;
     }
-
-    for (int i = row; i < row + rectHeight; i++) {
-      for (int j = col; j < col + rectWidth; j++) {
-        if (material[i][j] != 0) {
+    if (pos.y + rectangle.height > material.length || pos.x + rectangle.width > material[0].length)
+      return false;
+    for (int i = pos.y; i < pos.y + rectangle.height; i++)
+      for (int j = pos.x; j < pos.x + rectangle.width; j++)
+        if (material[i][j] != 0)
           return false;
-        }
-      }
-    }
     return true;
+  }
+
+  private static int[] placeRectangle(int[][] material, int x, int y, Rectangle rectangle) {
+    int[] ans = { x + rectangle.width, y + rectangle.height };
+    for (int i = y; i < y + rectangle.height; i++)
+      for (int j = x; j < x + rectangle.width; j++)
+        material[i][j] = rectangle.id;
+
+    return ans;
+  }
+
+  private static void printMaterial(int[][] material) {
+    for (int i = material.length - 1; i >= 0; i--) {
+      System.out.print(i + "|\t");
+      for (int j = 0; j < material[0].length; j++)
+        System.out.print(material[i][j] + "\t");
+      System.out.println();
+    }
+    System.out.println("\t0\t1\t2\t3\t4\t5\t6\t7");
   }
 
 }
