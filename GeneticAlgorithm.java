@@ -23,6 +23,7 @@ public class GeneticAlgorithm {
     int[][] material = new int[materialHeight][materialWidth];
 
     for (int generation = 0; generation < numberOfGenerations; generation++) {
+      // selection
       for (Individual individual : population.getIndividuals()) {
         System.out.println("-------------------------------------");
         System.out.println("permutacion: " + Arrays.toString(individual.permutation));
@@ -31,14 +32,16 @@ public class GeneticAlgorithm {
         System.out.println("fitness :%" + individual.fitness);
         printMaterial(material);
       }
+      sortPopulationByFitness(population.getIndividuals());
 
-      // selection, crossover, mutation
+      // crossover
+
+      // mutation
 
       // the population with the new generation
     }
 
     // Retrieve the best individual from the final population
-    sortPopulationByFitness(population.getIndividuals());
     Individual bestIndividual = population.getIndividuals().get(0);
     System.out.println(bestIndividual.fitness + " mejor");
   }
@@ -64,33 +67,34 @@ public class GeneticAlgorithm {
           break;
         } else {
           pos = list.tail;
-          if (pos != null) {
+          if (pos != null)
             while (!fits(material, pos, rectangle, list)) {
               pos = pos.prev;
-              if (pos == null)
+              if (pos == null) {
+                material[0][0] = -1;// rectangle doesn't fit
                 break;
+              }
             }
-          } else
-            System.out.println("asdasdasd");
         }
     }
     return material;
   }
 
-  private static boolean esRenglonCero(int[] renglon) {
-    for (int valor : renglon)
-      if (valor != 0)
+  private static boolean isEmptyRow(int[] row) {
+    for (int value : row)
+      if (value != 0)
         return false;
-
     return true;
   }
 
-  private static double fitnessFunction(int[][] material) {// no contempla los del lado izq
+  private static double fitnessFunction(int[][] material) {
+    if (material[0][0] == -1)
+      return 100;// doesn't satisfy problem requirements
     double totalArea = material[0].length * material.length;
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
       for (int j = 0; j < material[0].length; j++) {
-        if (esRenglonCero(material[i]))
+        if (isEmptyRow(material[i]))
           break;
         if (material[i][j] == 0)
           enclosedArea++;

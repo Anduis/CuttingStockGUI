@@ -1,3 +1,5 @@
+//just for making tests of this component
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,9 +12,10 @@ public class Heuristic {
         new Rectangle(4, 1, 3),
         new Rectangle(5, 2, 3),
         new Rectangle(6, 2, 2),
-        new Rectangle(7, 4, 1));
+        new Rectangle(7, 4, 1),
+        new Rectangle(8, 8, 4));
     int[] perm1 = { 1, 2, 3, 4, 5, 6, 7 };
-    int[] perm2 = { 1, 3, 4, 5, 2, 6, 7 };
+    int[] perm2 = { 1, 3, 4, 5, 2, 6, 7, 8 };
 
     Individual individual1 = new Individual(perm1);
     Individual individual2 = new Individual(perm2);
@@ -33,13 +36,15 @@ public class Heuristic {
   }
 
   private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
-      int materialHeight) {// no contempla que no quepa
+      int materialHeight) {
     int[][] material = new int[materialHeight][materialWidth];
     DoubleLinkedList list = new DoubleLinkedList();
     list.addFirst(0, 0);
     Node pos = list.head;
     for (int rectId : individual.permutation) {
       Rectangle rectangle = rectangles.get(rectId - 1);
+      if (individual.rotations[rectId - 1])
+        rectangle = rotated(rectangle);
       while (pos != null)
         if (fits(material, pos, rectangle, list)) {
           int[] xy = placeRectangle(material, pos.x, pos.y, rectangle);
@@ -49,33 +54,38 @@ public class Heuristic {
           break;
         } else {
           pos = list.tail;
-          if (pos != null) {
+          if (pos != null)
             while (!fits(material, pos, rectangle, list)) {
               pos = pos.prev;
-              if (pos == null)
+              if (pos == null) {
+                material[0][0] = -1;// rectangle doesn't fit
                 break;
+              }
             }
-          } else
-            System.out.println("asdasdasd");
         }
     }
     return material;
   }
 
-  private static boolean esRenglonCero(int[] renglon) {
-    for (int valor : renglon)
-      if (valor != 0)
-        return false;
+  private static Rectangle rotated(Rectangle r) {
+    return new Rectangle(r.id, r.height, r.width);
+  }
 
+  private static boolean isEmptyRow(int[] row) {
+    for (int value : row)
+      if (value != 0)
+        return false;
     return true;
   }
 
-  private static double fitnessFunction(int[][] material) {// no contempla los del lado izq
+  private static double fitnessFunction(int[][] material) {
+    if (material[0][0] == -1)
+      return 100;// doesn't satisfy problem requirements
     double totalArea = material[0].length * material.length;
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
       for (int j = 0; j < material[0].length; j++) {
-        if (esRenglonCero(material[i]))
+        if (isEmptyRow(material[i]))
           break;
         if (material[i][j] == 0)
           enclosedArea++;
