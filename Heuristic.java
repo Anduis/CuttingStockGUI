@@ -80,7 +80,7 @@ public class Heuristic {
 
   private static double fitnessFunction(int[][] material) {
     if (material[0][0] == -1)
-      return 100;// doesn't satisfy problem requirements
+      return 0;// doesn't satisfy problem requirements
     double totalArea = material[0].length * material.length;
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
@@ -91,7 +91,7 @@ public class Heuristic {
           enclosedArea++;
       }
 
-    double ans = ((enclosedArea / totalArea) * 100);
+    double ans = 100-((enclosedArea / totalArea) * 100);
     return ans;
   }
 

@@ -2,13 +2,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 public class GeneticAlgorithm {
   public static void main(String[] args) {
     int populationSize = 100;
-    int numberOfGenerations = 2;
+    int numberOfGenerations = 100;
     int materialWidth = 8;
     int materialHeight = 6;
+    double mutationProbability = 0.5;
 
     List<Rectangle> rectangles = Arrays.asList(
         new Rectangle(1, 2, 2),
@@ -23,31 +25,101 @@ public class GeneticAlgorithm {
     int[][] material = new int[materialHeight][materialWidth];
 
     for (int generation = 0; generation < numberOfGenerations; generation++) {
-      // selection
+      // Evaluation
       for (Individual individual : population.getIndividuals()) {
-        System.out.println("-------------------------------------");
-        System.out.println("permutacion: " + Arrays.toString(individual.permutation));
         material = getPattern(individual, rectangles, materialWidth, materialHeight);
         individual.setFitness(fitnessFunction(material));
-        System.out.println("fitness :%" + individual.fitness);
-        printMaterial(material);
       }
+      // selection
       sortPopulationByFitness(population.getIndividuals());
+      int selectedSize = (int) (populationSize * 0.1); // Tamaño de la selección del 10%
+      List<Individual> seleccionados = population.getIndividuals().subList(0, selectedSize);
+      double totalFitness = getTotalFitness(population.getIndividuals());
 
       // crossover
+      while (seleccionados.size() < populationSize) {
+        Individual father = roulette(population.getIndividuals(), totalFitness);
+        Individual mother = roulette(population.getIndividuals(), totalFitness);
+        // Realizar el crossover
+        int[] childPermutation = crossover(father.getPermutation(), mother.getPermutation());
+        Individual child = new Individual(childPermutation);
+        // Agregar el nuevo hijo a la población
+        seleccionados.add(child);
+      }
 
       // mutation
+      mutation(seleccionados, mutationProbability);
 
-      // the population with the new generation
+      // the new generation
+      population.individuals = seleccionados;
     }
 
-    // Retrieve the best individual from the final population
+    // the best individual from the final population
+    sortPopulationByFitness(population.getIndividuals());
     Individual bestIndividual = population.getIndividuals().get(0);
     System.out.println(bestIndividual.fitness + " mejor");
+    material = getPattern(bestIndividual, rectangles, materialWidth, materialHeight);
+    printMaterial(material);
   }
 
   private static void sortPopulationByFitness(List<Individual> population) {
-    Collections.sort(population, Comparator.comparingDouble(Individual::getFitness));
+    Collections.sort(population, Comparator.comparingDouble(Individual::getFitness).reversed());
+  }
+
+  private static void mutation(List<Individual> individuals, double probability) {
+    Random random = new Random();
+    for (Individual individual : individuals)
+      if (random.nextDouble() < probability)
+        individual.mutates();
+  }
+
+  private static double getTotalFitness(List<Individual> individuals) {
+    double totalFitness = 0;
+    for (Individual individual : individuals)
+      totalFitness += individual.getFitness();
+    return totalFitness;
+  }
+
+  private static Individual roulette(List<Individual> population, double totalFitness) {
+    Random random = new Random();
+    double randomNumber = random.nextDouble() * totalFitness;
+    double currentSum = 0;
+
+    for (Individual individual : population) {
+      currentSum += individual.getFitness();
+      if (currentSum >= randomNumber)
+        return individual;
+    }
+    return population.get(random.nextInt(population.size()));
+  }
+
+  public static int[] crossover(int[] father, int[] mother) {
+    Random random = new Random();
+    int length = father.length;
+    int partition = random.nextInt(length / 2);
+    int[] child = new int[father.length];
+
+    for (int i = 0; i < father.length / 2; i++)
+      child[i] = father[partition + i];
+
+    for (int i = length / 2; i < length; i++)
+      for (int motherGen : mother)
+        if (i == length)
+          break;
+        else {
+          boolean isIn = false;
+          for (int childGen : child)
+            if (childGen == 0)
+              break;
+            else if (motherGen == childGen) {
+              isIn = true;
+              break;
+            }
+          if (!isIn)
+            child[i++] = motherGen;
+        }
+    return child;
+
   }
 
   private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
@@ -58,6 +130,8 @@ public class GeneticAlgorithm {
     Node pos = list.head;
     for (int rectId : individual.permutation) {
       Rectangle rectangle = rectangles.get(rectId - 1);
+      if (individual.rotations[rectId - 1])
+        rectangle = rotated(rectangle);
       while (pos != null)
         if (fits(material, pos, rectangle, list)) {
           int[] xy = placeRectangle(material, pos.x, pos.y, rectangle);
@@ -80,6 +154,10 @@ public class GeneticAlgorithm {
     return material;
   }
 
+  private static Rectangle rotated(Rectangle r) {
+    return new Rectangle(r.id, r.height, r.width);
+  }
+
   private static boolean isEmptyRow(int[] row) {
     for (int value : row)
       if (value != 0)
@@ -87,9 +165,9 @@ public class GeneticAlgorithm {
     return true;
   }
 
-  private static double fitnessFunction(int[][] material) {
+  private static double fitnessFunction(int[][] material) {// the lower the better
     if (material[0][0] == -1)
-      return 100;// doesn't satisfy problem requirements
+      return 0;// doesn't satisfy problem requirements
     double totalArea = material[0].length * material.length;
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
@@ -100,7 +178,7 @@ public class GeneticAlgorithm {
           enclosedArea++;
       }
 
-    double ans = ((enclosedArea / totalArea) * 100);
+    double ans = 100 - ((enclosedArea / totalArea) * 100);
     return ans;
   }
 

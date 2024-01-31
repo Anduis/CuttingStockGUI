@@ -14,6 +14,10 @@ public class Population {
     }
   }
 
+  public Population() {
+    individuals = new ArrayList<>();
+  }
+
   public List<Individual> getIndividuals() {
     return individuals;
   }
