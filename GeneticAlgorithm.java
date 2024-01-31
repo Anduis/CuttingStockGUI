@@ -6,11 +6,11 @@ import java.util.Random;
 
 public class GeneticAlgorithm {
   public static void main(String[] args) {
-    int populationSize = 100;
+    double mutationProbability = 0.5;
     int numberOfGenerations = 100;
+    int populationSize = 100;
     int materialWidth = 8;
     int materialHeight = 6;
-    double mutationProbability = 0.5;
 
     List<Rectangle> rectangles = Arrays.asList(
         new Rectangle(1, 2, 2),
@@ -119,7 +119,6 @@ public class GeneticAlgorithm {
             child[i++] = motherGen;
         }
     return child;
-
   }
 
   private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
@@ -165,16 +164,15 @@ public class GeneticAlgorithm {
     return true;
   }
 
-  private static double fitnessFunction(int[][] material) {// the lower the better
+  private static double fitnessFunction(int[][] material) {
     if (material[0][0] == -1)
       return 0;// doesn't satisfy problem requirements
     double totalArea = material[0].length * material.length;
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
       for (int j = 0; j < material[0].length; j++) {
-        if (isEmptyRow(material[i]))
-          break;
-        if (material[i][j] == 0)
+        if (isEmptyRow(material[i])) {
+        } else if (material[i][j] == 0)
           enclosedArea++;
       }
 

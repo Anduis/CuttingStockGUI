@@ -1,38 +1,36 @@
 //just for making tests of this component
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Heuristic {
   public static void main(String[] args) {
-    List<Rectangle> rectangles = Arrays.asList(
-        new Rectangle(1, 2, 2),
-        new Rectangle(2, 3, 1),
-        new Rectangle(3, 1, 2),
-        new Rectangle(4, 1, 3),
-        new Rectangle(5, 2, 3),
-        new Rectangle(6, 2, 2),
-        new Rectangle(7, 4, 1),
-        new Rectangle(8, 8, 4));
-    int[] perm1 = { 1, 2, 3, 4, 5, 6, 7 };
-    int[] perm2 = { 1, 3, 4, 5, 2, 6, 7, 8 };
-
-    Individual individual1 = new Individual(perm1);
-    Individual individual2 = new Individual(perm2);
-
+    int c = 1;
+    List<Rectangle> rectangles = new ArrayList<Rectangle>();
     int materialWidth = 8;
     int materialHeight = 6;
+    Scanner sc = new Scanner(System.in);
+    while (true) {
+      int ancho = sc.nextInt();
+      int alto = sc.nextInt();
+      rectangles.add(new Rectangle(c++, ancho, alto));
+      Individual individual = new Individual(naturalPerm(rectangles.size()));
 
-    int[][] material = new int[materialHeight][materialWidth];
+      int[][] material = new int[materialHeight][materialWidth];
 
-    material = getPattern(individual1, rectangles, materialWidth, materialHeight);
-    individual1.setFitness(fitnessFunction(material));
-    printMaterial(material);
+      material = getPattern(individual, rectangles, materialWidth, materialHeight);
+      individual.setFitness(fitnessFunction(material));
+      printMaterial(material);
 
-    material = getPattern(individual2, rectangles, materialWidth, materialHeight);
-    individual2.setFitness(fitnessFunction(material));
-    printMaterial(material);
+    }
+  }
 
+  private static int[] naturalPerm(int x) {
+    int[] ans = new int[x];
+    for (int i = 0; i < ans.length; i++)
+      ans[i] = i + 1;
+    return ans;
   }
 
   private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
@@ -85,13 +83,12 @@ public class Heuristic {
     double enclosedArea = 0;
     for (int i = 0; i < material.length; i++)
       for (int j = 0; j < material[0].length; j++) {
-        if (isEmptyRow(material[i]))
-          break;
-        if (material[i][j] == 0)
+        if (isEmptyRow(material[i])) {
+        } else if (material[i][j] == 0)
           enclosedArea++;
       }
 
-    double ans = 100-((enclosedArea / totalArea) * 100);
+    double ans = 100 - ((enclosedArea / totalArea) * 100);
     return ans;
   }
 

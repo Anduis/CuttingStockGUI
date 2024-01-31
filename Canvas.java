@@ -5,25 +5,20 @@ import javax.swing.JPanel;
 
 public class Canvas extends JPanel {
 
-  private int xRectangulo;
-  private int yRectangulo;
-  private int anchoRectangulo;
-  private int altoRectangulo;
+  int[][] matriz;
+  Color[] colores;
 
   public Canvas() {
-    // Inicializamos valores por defecto
-    xRectangulo = 0;
-    yRectangulo = 0;
-    anchoRectangulo = 0;
-    altoRectangulo = 0;
+    matriz = new int[1][1];
+    colores = new Color[1];
+    colores[0] = Color.WHITE;
   }
 
-  // Método para dibujar el rectángulo en el panel
-  public void dibujarRectangulo(int x, int y, int ancho, int alto) {
-    xRectangulo = x;
-    yRectangulo = y;
-    anchoRectangulo = ancho;
-    altoRectangulo = alto;
+  public void dibujarMatriz(int[][] m, int s) {
+    matriz = m;
+    colores = new Color[s];
+    for (int i = 0; i < colores.length; i++)
+      colores[i] = randColor();
     repaint();
   }
 
@@ -35,8 +30,12 @@ public class Canvas extends JPanel {
   // Método que se llama automáticamente para dibujar en el panel
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    // Dibujamos el rectángulo con los valores actuales
-    g.setColor(randColor());
-    g.fillRect(xRectangulo, yRectangulo, anchoRectangulo, altoRectangulo);
+    if (matriz[0][0] != -1)
+      for (int i = 0; i < matriz.length; i++)
+        for (int j = 0; j < matriz[0].length; j++)
+          if (matriz[i][j] != 0) {
+            g.setColor(colores[matriz[i][j] - 1]);
+            g.fillRect(j * 10, i * 10, 10, 10);
+          }
   }
 }
