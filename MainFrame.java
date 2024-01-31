@@ -181,7 +181,7 @@ public class MainFrame extends javax.swing.JFrame {
 																.addGap(0, 0, 0))
 														.addComponent(xPiezaField, javax.swing.GroupLayout.DEFAULT_SIZE,
 																javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-										.addComponent(mensaje, javax.swing.GroupLayout.PREFERRED_SIZE, 90,
+										.addComponent(mensaje, javax.swing.GroupLayout.PREFERRED_SIZE, 120,
 												javax.swing.GroupLayout.PREFERRED_SIZE))
 								.addContainerGap()));
 		ajustesPanelLayout.setVerticalGroup(
@@ -365,7 +365,7 @@ public class MainFrame extends javax.swing.JFrame {
 		material = getPattern(individual, rectangles, anchoMaterial, altoMaterial);
 		individual.setFitness(fitnessFunction(material));
 		lienzo.dibujarMatriz(material, rectangles.size());
-		mensaje.setText("Fitness " + individual.fitness + "%");
+		mensaje.setText("Fitness " + String.format("%.2f", individual.fitness) + "%");
 		// enable genetic area
 		optimizaButton.setEnabled(true);
 		generationsField.setEnabled(true);
@@ -417,12 +417,7 @@ public class MainFrame extends javax.swing.JFrame {
 		Individual bestIndividual = population.getIndividuals().get(0);
 		material = getPattern(bestIndividual, rectangles, anchoMaterial, altoMaterial);
 		lienzo.dibujarMatriz(material, rectangles.size());
-		mensaje.setText("Fitness " + bestIndividual.fitness + "%");
-
-		generationsField.setEnabled(false);
-		populationField.setEnabled(false);
-		mutationField.setEnabled(false);
-
+		mensaje.setText("Fitness " + String.format("%.2f", bestIndividual.fitness) + "%");
 	}
 
 	private static void sortPopulationByFitness(List<Individual> population) {
@@ -535,20 +530,20 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 
 	private static double fitnessFunction(int[][] material) {
-    if (material[0][0] == -1)
-      return 0;// doesn't satisfy problem requirements
-    double totalArea = material[0].length * material.length;
-    double enclosedArea = 0;
-    for (int i = 0; i < material.length; i++)
-      for (int j = 0; j < material[0].length; j++) {
-        if (isEmptyRow(material[i])) {
-        } else if (material[i][j] == 0)
-          enclosedArea++;
-      }
+		if (material[0][0] == -1)
+			return 0;// doesn't satisfy problem requirements
+		double totalArea = material[0].length * material.length;
+		double enclosedArea = 0;
+		for (int i = 0; i < material.length; i++)
+			for (int j = 0; j < material[0].length; j++) {
+				if (isEmptyRow(material[i])) {
+				} else if (material[i][j] == 0)
+					enclosedArea++;
+			}
 
-    double ans = 100 - ((enclosedArea / totalArea) * 100);
-    return ans;
-  }
+		double ans = 100 - ((enclosedArea / totalArea) * 100);
+		return ans;
+	}
 
 	private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// Reestructurar esto
 		int x = xy[0];
