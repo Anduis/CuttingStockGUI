@@ -1,3 +1,5 @@
+[![es](https://img.shields.io/badge/lang-es-yellow.svg)](./README.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](./README.en.md)
 # CuttingStockGUI
 
 Este proyecto es un ejercicio para construir una interfaz gráfica en Java para una herramienta que resuelve el problema de corte de material mediante la implementación de un algoritmo genético.
