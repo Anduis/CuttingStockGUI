@@ -8,8 +8,8 @@ public class MainFrame extends javax.swing.JFrame {
 	double mutationProbability;
 	int numberOfGenerations;
 	int populationSize;
-	int anchoMaterial;
-	int altoMaterial;
+	int materialWidth;
+	int materialHeight;
 
 	List<Rectangle> rectangles = new ArrayList<Rectangle>();
 	int c = 1;
@@ -336,37 +336,44 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 
 	private void materialButtonActionPerformed(java.awt.event.ActionEvent evt) {
-		anchoMaterial = Integer.parseInt(xMatField.getText());
-		altoMaterial = Integer.parseInt(yMatField.getText());
+		materialWidth = Integer.parseInt(xMatField.getText());
+		materialHeight = Integer.parseInt(yMatField.getText());
+		// disable material input area
 		xMatField.setEnabled(false);
 		yMatField.setEnabled(false);
 		materialButton.setEnabled(false);
-		// enable piece input area
+		// enable item input area
 		xPiezaField.setEnabled(true);
 		yPiezaField.setEnabled(true);
 		piezaButton.setEnabled(true);
 
-		initLienzo(anchoMaterial * 10, altoMaterial * 10);
+		initLienzo(materialWidth * 10, materialHeight * 10);
 	}
 
-	int contadorPiezas = 0;
+	private static int[] naturalPerm(int x) {
+		int[] ans = new int[x];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = i + 1;
+		return ans;
+	}
 
 	private void piezaButtonActionPerformed(java.awt.event.ActionEvent evt) {
-		int ancho = Integer.parseInt(xPiezaField.getText());
-		int alto = Integer.parseInt(yPiezaField.getText());
+		int width = Integer.parseInt(xPiezaField.getText());
+		int height = Integer.parseInt(yPiezaField.getText());
+		// clear fields
 		xPiezaField.setText("");
 		yPiezaField.setText("");
-		// agrega un rectangulo
-		rectangles.add(new Rectangle(c++, ancho, alto));
-		itemDisplay.add(++contadorPiezas + ".- " + "[" + ancho + "*" + alto + "]");
+		// add item to list
+		itemDisplay.add(c + ".- " + "[" + width + "*" + height + "]");
+		rectangles.add(new Rectangle(c++, width, height));
 
 		Individual individual = new Individual(naturalPerm(rectangles.size()));
-		int[][] material = new int[altoMaterial][anchoMaterial];
-		material = getPattern(individual, rectangles, anchoMaterial, altoMaterial);
+		int[][] material = new int[materialHeight][materialWidth];
+		material = getPattern(individual, rectangles, materialWidth, materialHeight);
 		individual.setFitness(fitnessFunction(material));
 		lienzo.dibujarMatriz(material, rectangles.size());
 		mensaje.setText("Fitness " + String.format("%.2f", individual.fitness) + "%");
-		// enable genetic area
+		// enable genetic algorithm area
 		optimizaButton.setEnabled(true);
 		generationsField.setEnabled(true);
 		populationField.setEnabled(true);
@@ -379,13 +386,15 @@ public class MainFrame extends javax.swing.JFrame {
 		populationSize = Integer.parseInt(populationField.getText());
 		mutationProbability = Double.parseDouble(mutationField.getText());
 
+		// here starts the genetic algorithm located in GeneticAlgorithm.java
+
 		population = new Population(populationSize, rectangles.size());
-		int[][] material = new int[altoMaterial][anchoMaterial];
+		int[][] material = new int[materialHeight][materialWidth];
 
 		for (int generation = 0; generation < numberOfGenerations; generation++) {
 			// Evaluation
 			for (Individual individual : population.getIndividuals()) {
-				material = getPattern(individual, rectangles, anchoMaterial, altoMaterial);
+				material = getPattern(individual, rectangles, materialWidth, materialHeight);
 				individual.setFitness(fitnessFunction(material));
 			}
 			// selection
@@ -412,10 +421,13 @@ public class MainFrame extends javax.swing.JFrame {
 			population.individuals = seleccionados;
 		}
 
-		// the best individual from the final population
+		// printing the best individual from the final population
+		// printing results section may vary from the code in GeneticAlgorithm.java
+		// here seem to be an error, when pressing more than once the optimize button
+		// !!!!
 		sortPopulationByFitness(population.getIndividuals());
 		Individual bestIndividual = population.getIndividuals().get(0);
-		material = getPattern(bestIndividual, rectangles, anchoMaterial, altoMaterial);
+		material = getPattern(bestIndividual, rectangles, materialWidth, materialHeight);
 		lienzo.dibujarMatriz(material, rectangles.size());
 		mensaje.setText("Fitness " + String.format("%.2f", bestIndividual.fitness) + "%");
 	}
@@ -477,13 +489,6 @@ public class MainFrame extends javax.swing.JFrame {
 						child[i++] = motherGen;
 				}
 		return child;
-	}
-
-	private static int[] naturalPerm(int x) {
-		int[] ans = new int[x];
-		for (int i = 0; i < ans.length; i++)
-			ans[i] = i + 1;
-		return ans;
 	}
 
 	private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
@@ -592,16 +597,7 @@ public class MainFrame extends javax.swing.JFrame {
 
 		return ans;
 	}
-
-	private static void printMaterial(int[][] material) {
-		for (int i = material.length - 1; i >= 0; i--) {
-			System.out.print(i + "|\t");
-			for (int j = 0; j < material[0].length; j++)
-				System.out.print(material[i][j] + "\t");
-			System.out.println();
-		}
-		System.out.println("\t0\t1\t2\t3\t4\t5\t6\t7");
-	}
+	// here ends the genetic algorithm located in GeneticAlgorithm.java
 
 	// Variables declaration - do not modify
 	private javax.swing.JPanel ajustesPanel;

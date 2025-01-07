@@ -1,4 +1,4 @@
-//just for making tests of this component
+// for testing constructive heuristics
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class Heuristic {
       material = getPattern(individual, rectangles, materialWidth, materialHeight);
       individual.setFitness(fitnessFunction(material));
       printMaterial(material);
-
+      System.out.println(individual.fitness);
     }
   }
 
@@ -57,6 +57,7 @@ public class Heuristic {
               pos = pos.prev;
               if (pos == null) {
                 material[0][0] = -1;// rectangle doesn't fit
+                System.out.println("Rectangle doesn't fit");
                 break;
               }
             }
@@ -92,7 +93,8 @@ public class Heuristic {
     return ans;
   }
 
-  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// Reestructurar esto
+  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {  private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {//// heuristic
+    //esto es al reves?
     int x = xy[0];
     int y = xy[1];
     if (xy[1] < material.length) {
