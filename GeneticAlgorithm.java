@@ -1,5 +1,7 @@
 // For testing instances withouth GUI
-import java.util.Arrays;
+
+import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -10,38 +12,54 @@ public class GeneticAlgorithm {
     double mutationProbability = 0.5;
     int numberOfGenerations = 100;
     int populationSize = 100;
-    int materialWidth = 8;
-    int materialHeight = 6;
+    int i = 1;
+    List<Rectangle> rectangles = new ArrayList<Rectangle>();
+    Scanner sc = new Scanner(System.in);
+    int materialWidth = sc.nextInt();
+    int materialHeight = sc.nextInt();
+    while (true) {
+      String input = sc.next();
+      if (input.equalsIgnoreCase("e")) {
+        sc.close();
+        break;
+      }
+      int width = Integer.parseInt(input);
+      int height = sc.nextInt();
+      rectangles.add(new Rectangle(i++, width, height));
+      System.out.println("Rectangle " + (i - 1) + " added with width " + width + " and height " + height);
+      Individual individual = new Individual(naturalPerm(rectangles.size()));
 
-    List<Rectangle> rectangles = Arrays.asList(
-        new Rectangle(1, 2, 2),
-        new Rectangle(2, 3, 1),
-        new Rectangle(3, 1, 2),
-        new Rectangle(4, 1, 3),
-        new Rectangle(5, 2, 3),
-        new Rectangle(6, 2, 2),
-        new Rectangle(7, 4, 1));
+      int[][] material = new int[materialHeight][materialWidth];
+
+      material = getPattern(individual, rectangles, materialWidth, materialHeight);
+      individual.setFitness(fitnessFunction(material));
+      printMaterial(material);
+      System.out.println("fitness " + individual.getFitness());
+      System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    }
 
     Population population = new Population(populationSize, rectangles.size());
     int[][] material = new int[materialHeight][materialWidth];
-
+    
     for (int generation = 0; generation < numberOfGenerations; generation++) {
       // Evaluation
-      for (Individual individual : population.getIndividuals()) {//temp material needed!!!!
-        material = getPattern(individual, rectangles, materialWidth, materialHeight);
-        individual.setFitness(fitnessFunction(material));
+      for (Individual individual : population.getIndividuals()) {
+        int[][] materialTemp = new int[materialHeight][materialWidth];
+        materialTemp = getPattern(individual, rectangles, materialWidth, materialHeight);
+        individual.setFitness(fitnessFunction(materialTemp));
       }
       // selection
       sortPopulationByFitness(population.getIndividuals());
-      List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));//to select the best 10% of the population
+      List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));// to select the
+                                                                                                       // best 10% of
+                                                                                                       // the population
       double totalFitness = getTotalFitness(population.getIndividuals());
 
       // crossover
       while (selected.size() < populationSize) {
         Individual father = roulette(population.getIndividuals(), totalFitness);
         Individual mother = roulette(population.getIndividuals(), totalFitness);
-        int[] childPermutation = crossover(father.getPermutation(), mother.getPermutation());
-        Individual child = new Individual(childPermutation);
+        Individual child = crossover(father, mother);
         // add the newborn to the selected individuals
         selected.add(child);
       }
@@ -56,7 +74,7 @@ public class GeneticAlgorithm {
     // printing the best individual from the final population
     sortPopulationByFitness(population.getIndividuals());
     Individual bestIndividual = population.getIndividuals().get(0);
-    System.out.println(bestIndividual.fitness + " mejor");
+    System.out.println(bestIndividual.getFitness() + " mejor");
     material = getPattern(bestIndividual, rectangles, materialWidth, materialHeight);
     printMaterial(material);
   }
@@ -81,7 +99,7 @@ public class GeneticAlgorithm {
 
   private static Individual roulette(List<Individual> population, double totalFitness) {
     Random random = new Random();
-    double randomNumber = random.nextDouble() * totalFitness;//check interval!!!!
+    double randomNumber = random.nextDouble() * totalFitness;// check interval!!!!
     double currentSum = 0;
 
     for (Individual individual : population) {
@@ -92,32 +110,45 @@ public class GeneticAlgorithm {
     return population.get(random.nextInt(population.size()));
   }
 
-  public static int[] crossover(int[] father, int[] mother) {
+  public static Individual crossover(Individual father, Individual mother) {
+    Individual child = new Individual(new int[father.permutation.length]);
+    boolean[] used = new boolean[father.permutation.length];
+
     Random random = new Random();
-    int length = father.length;
-    int partition = random.nextInt(length / 2);
-    int[] child = new int[father.length];
+    int start = random.nextInt(child.permutation.length);
+    int end = random.nextInt(child.permutation.length);
 
-    for (int i = 0; i < father.length / 2; i++)
-      child[i] = father[partition + i];
+    if (start > end) {
+      int temp = start;
+      start = end;
+      end = temp;
+    }
 
-    for (int i = length / 2; i < length; i++)
-      for (int motherGen : mother)
-        if (i == length)
-          break;
-        else {
-          boolean isIn = false;
-          for (int childGen : child)
-            if (childGen == 0)
-              break;
-            else if (motherGen == childGen) {
-              isIn = true;
-              break;
-            }
-          if (!isIn)
-            child[i++] = motherGen;
-        }
+    for (int i = start; i <= end; i++) {
+      child.permutation[i] = father.permutation[i];
+      child.rotations[i] = father.rotations[i];
+      used[father.permutation[i] - 1] = true;
+    }
+
+    int index = (end + 1) % child.permutation.length;
+    for (int i = 0; i < mother.permutation.length; i++) {
+      int gene = mother.permutation[(end + 1 + i) % child.permutation.length];
+      boolean geneB = mother.rotations[(end + 1 + i) % child.rotations.length];
+      if (!used[gene - 1]) {
+        child.permutation[index] = gene;
+        child.rotations[index] = geneB;
+        used[gene - 1] = true;
+        index = (index + 1) % child.permutation.length;
+      }
+    }
     return child;
+  }
+
+  private static int[] naturalPerm(int x) {
+    int[] ans = new int[x];
+    for (int i = 0; i < ans.length; i++)
+      ans[i] = i + 1;
+    return ans;
   }
 
   private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
@@ -180,7 +211,7 @@ public class GeneticAlgorithm {
   }
 
   private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// heuristic
-    //esto es al reves? check!!!!
+    // esto es al reves? check!!!!
     int x = xy[0];
     int y = xy[1];
     if (xy[1] < material.length) {
@@ -235,7 +266,10 @@ public class GeneticAlgorithm {
         System.out.print(material[i][j] + "\t");
       System.out.println();
     }
-    System.out.println("\t0\t1\t2\t3\t4\t5\t6\t7");
+    for (int i = 0; i < material[0].length; i++) {
+      System.out.print("\t" + i);
+    }
+    System.out.println();
   }
 
 }

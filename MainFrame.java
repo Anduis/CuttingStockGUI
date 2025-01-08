@@ -388,37 +388,38 @@ public class MainFrame extends javax.swing.JFrame {
 
 		// here starts the genetic algorithm located in GeneticAlgorithm.java
 
-		population = new Population(populationSize, rectangles.size());
+		Population population = new Population(populationSize, rectangles.size());
 		int[][] material = new int[materialHeight][materialWidth];
 
 		for (int generation = 0; generation < numberOfGenerations; generation++) {
 			// Evaluation
-			for (Individual individual : population.getIndividuals()) {
+			for (Individual individual : population.getIndividuals()) {// temp material needed!!!!
 				material = getPattern(individual, rectangles, materialWidth, materialHeight);
 				individual.setFitness(fitnessFunction(material));
 			}
 			// selection
 			sortPopulationByFitness(population.getIndividuals());
-			int selectedSize = (int) (populationSize * 0.1); // Tamaño de la selección del 10%
-			List<Individual> seleccionados = population.getIndividuals().subList(0, selectedSize);
+			List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));// to select the
+																																																				// best 10% of
+																																																				// the
+																																																				// population
 			double totalFitness = getTotalFitness(population.getIndividuals());
 
 			// crossover
-			while (seleccionados.size() < populationSize) {
+			while (selected.size() < populationSize) {
 				Individual father = roulette(population.getIndividuals(), totalFitness);
 				Individual mother = roulette(population.getIndividuals(), totalFitness);
-				// Realizar el crossover
 				int[] childPermutation = crossover(father.getPermutation(), mother.getPermutation());
 				Individual child = new Individual(childPermutation);
-				// Agregar el nuevo hijo a la población
-				seleccionados.add(child);
+				// add the newborn to the selected individuals
+				selected.add(child);
 			}
 
 			// mutation
-			mutation(seleccionados, mutationProbability);
+			mutation(selected, mutationProbability);
 
-			// the new generation
-			population.individuals = seleccionados;
+			// update the new generation
+			population.individuals = selected;
 		}
 
 		// printing the best individual from the final population
@@ -452,7 +453,7 @@ public class MainFrame extends javax.swing.JFrame {
 
 	private static Individual roulette(List<Individual> population, double totalFitness) {
 		Random random = new Random();
-		double randomNumber = random.nextDouble() * totalFitness;
+		double randomNumber = random.nextDouble() * totalFitness;// check interval!!!!
 		double currentSum = 0;
 
 		for (Individual individual : population) {
@@ -463,7 +464,7 @@ public class MainFrame extends javax.swing.JFrame {
 		return population.get(random.nextInt(population.size()));
 	}
 
-	public static int[] crossover(int[] father, int[] mother) {
+	public static int[] crossover(int[] father, int[] mother) {// check!!!! cambiar por OX
 		Random random = new Random();
 		int length = father.length;
 		int partition = random.nextInt(length / 2);
@@ -550,7 +551,8 @@ public class MainFrame extends javax.swing.JFrame {
 		return ans;
 	}
 
-	private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// Reestructurar esto
+	private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// heuristic
+		// esto es al reves? check!!!!
 		int x = xy[0];
 		int y = xy[1];
 		if (xy[1] < material.length) {
