@@ -1,34 +1,33 @@
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Comparator;
+import java.util.Collections;
+import java.util.ArrayList;
 
 public class Population {
   List<Individual> individuals;
 
-  public Population(int populationSize, int numberOfRectangles) {
+  public Population(int populationSize, int numberOfRectangles) {// initialize the population with random individuals
     individuals = new ArrayList<>();
 
-    for (int i = 0; i < populationSize; i++) {
-      int[] permutation = generateRandomPermutation(numberOfRectangles);
-      individuals.add(new Individual(permutation));
+    individuals.add(new Individual(numberOfRectangles, false));// to include the individual with secuential permutation
+
+    for (int i = 0; i < populationSize - 1; i++) {
+      individuals.add(new Individual(numberOfRectangles, true));
     }
   }
 
-  public Population() {
-    individuals = new ArrayList<>();
-  }
-
-  public List<Individual> getIndividuals() {
+  public List<Individual> getIndividuals() {// return the individuals as a list
     return individuals;
   }
 
-  private int[] generateRandomPermutation(int size) {
-    List<Integer> permutation = new ArrayList<>();
-    for (int i = 1; i <= size; i++)
-      permutation.add(i);
+  public void sortPopulationByFitness() {// sort the individuals by fitness in descending order
+    Collections.sort(individuals, Comparator.comparingDouble(Individual::getFitness).reversed());
+  }
 
-    Collections.shuffle(permutation);
-
-    return permutation.stream().mapToInt(Integer::intValue).toArray();
+  public double getTotalFitness() {// sum of all the fitness of the individuals
+    double totalFitness = 0;
+    for (Individual individual : individuals)
+      totalFitness += individual.getFitness();
+    return totalFitness;
   }
 }
