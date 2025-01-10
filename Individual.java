@@ -5,9 +5,9 @@ import java.util.Collections;
 
 public class Individual {
   // represents the order in which the rectangles are placed in the material
-  int[] permutation;// genotype. if any value is negative, that rectangle is rotated
-  double fitness;// from 0 to 100
-  int[][] material;// phenotype. if first cell is -1, doesn't satisfy the requirements
+  private int[] permutation;// genotype. if any value is negative, that rectangle is rotated
+  private double fitness;// from 0 to 100
+  private int[][] material;// phenotype. if first cell is -1, doesn't satisfy the requirements
 
   public Individual(int x, boolean random) {
     if (random)
@@ -34,7 +34,7 @@ public class Individual {
     permutation[index] = -permutation[index];
   }
 
-  public void calculateFitness() {
+  private void calculateFitness() {
     if (material[0][0] == -1) {// doesn't satisfy problem requirements
       fitness = 0;
       return;
@@ -60,7 +60,7 @@ public class Individual {
     this.material = new int[materialHeight][materialWidth];
     DoubleLinkedList list = new DoubleLinkedList();
     list.addFirst(0, 0);
-    Node pos = list.head;
+    Node currentPosition = list.getHead();
     for (int rectIndex : permutation) {
       boolean isRotated = false;
       if (rectIndex < 0) {
@@ -69,20 +69,20 @@ public class Individual {
       }
       Rectangle rectangle = new Rectangle(rectangles.get(rectIndex - 1));
       if (isRotated)
-        rectangle = new Rectangle(rectangle.height, rectangle.width);// swap width and height so it's rotated
-      while (pos != null)
-        if (fits(pos, rectangle, list)) {
-          int[] xy = placeRectangle(pos.x, pos.y, rectangle, rectIndex);
+        rectangle = new Rectangle(rectangle.getHeight(), rectangle.getWidth());// swap width and height so it's rotated
+      while (currentPosition != null)
+        if (fits(currentPosition, rectangle, list)) {
+          int[] xy = placeRectangle(currentPosition.x, currentPosition.y, rectangle, rectIndex);
           addExtremes(list, xy);
-          list.delete(pos);
-          pos = list.head;
+          list.delete(currentPosition);
+          currentPosition = list.getHead();
           break;
         } else {// traverse the list bakwards until a position is found
-          pos = list.tail;
-          if (pos != null)
-            while (!fits(pos, rectangle, list)) {
-              pos = pos.prev;
-              if (pos == null) {
+          currentPosition = list.getTail();
+          if (currentPosition != null)
+            while (!fits(currentPosition, rectangle, list)) {
+              currentPosition = currentPosition.prev;
+              if (currentPosition == null) {
                 material[0][0] = -1;// rectangle doesn't fit
                 break;
               }
@@ -92,7 +92,9 @@ public class Individual {
     calculateFitness();
   }
 
-  public void addExtremes(DoubleLinkedList list, int[] xy) {
+  private void addExtremes(DoubleLinkedList list, int[] xy) {
+    // it adds new available positions to the list, from the top rigth corner,
+    // searches for the last empty cell in the x and y axis
     int x = xy[0];
     int y = xy[1];
     if (xy[1] < material.length) {
@@ -117,22 +119,22 @@ public class Individual {
     }
   }
 
-  public boolean fits(Node pos, Rectangle rectangle, DoubleLinkedList list) {
-    if (material[pos.y][pos.x] != 0) {// the position is already occupied
-      list.delete(pos);
+  private boolean fits(Node position, Rectangle rectangle, DoubleLinkedList list) {
+    if (material[position.y][position.x] != 0) {// the position is already occupied
+      list.delete(position);
       return false;
     }
-    if (pos.y + rectangle.height > material.length || pos.x + rectangle.width > material[0].length)
+    if (position.y + rectangle.getHeight() > material.length || position.x + rectangle.getWidth() > material[0].length)
       return false;
-    for (int i = pos.y; i < pos.y + rectangle.height; i++)
-      for (int j = pos.x; j < pos.x + rectangle.width; j++)
+    for (int i = position.y; i < position.y + rectangle.getHeight(); i++)
+      for (int j = position.x; j < position.x + rectangle.getWidth(); j++)
         if (material[i][j] != 0)
           return false;
     return true;
   }
 
-  public int[] placeRectangle(int leftMostX, int lowerY, Rectangle rectangle, int id) {
-    int[] xy = { leftMostX + rectangle.width, lowerY + rectangle.height };// top right corner after placement
+  private int[] placeRectangle(int leftMostX, int lowerY, Rectangle rectangle, int id) {
+    int[] xy = { leftMostX + rectangle.getWidth(), lowerY + rectangle.getHeight() };// top right corner after placement
     for (int i = lowerY; i < xy[1]; i++)
       for (int j = leftMostX; j < xy[0]; j++)
         material[i][j] = id;
@@ -149,7 +151,7 @@ public class Individual {
     return ans;
   }
 
-  public int[] generateRandomPermutation(int size) {
+  private int[] generateRandomPermutation(int size) {
     List<Integer> permutation = new ArrayList<>();
     for (int i = 1; i <= size; i++)
       permutation.add(i);

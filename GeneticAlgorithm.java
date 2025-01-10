@@ -39,7 +39,7 @@ public class GeneticAlgorithm {
       mutation(selected, mutationProbability);
 
       // update the new generation
-      population.individuals = selected;
+      population.newGeneration(selected);
     }
 
     // return the best individual from the final population
@@ -47,14 +47,14 @@ public class GeneticAlgorithm {
     return population.getIndividuals().get(0);
   }
 
-  public void mutation(List<Individual> individuals, double probability) {
+  private void mutation(List<Individual> individuals, double probability) {
     Random random = new Random();
     for (Individual individual : individuals)
       if (random.nextDouble() < probability)
         individual.mutates();
   }
 
-  public Individual roulette(List<Individual> population, double totalFitness) {
+  private Individual roulette(List<Individual> population, double totalFitness) {
     Random random = new Random();
     double randomNumber = random.nextDouble() * totalFitness;// check interval!!!!
     double currentSum = 0;
@@ -67,8 +67,8 @@ public class GeneticAlgorithm {
     return population.get(random.nextInt(population.size()));
   }
 
-  public Individual crossover(Individual father, Individual mother) {// order crossover
-    int length = father.permutation.length; // length of the permutation is the same any individual
+  private Individual crossover(Individual father, Individual mother) {// order crossover
+    int length = father.getPermutation().length; // length of the permutation is the same any individual
     Individual child = new Individual(length, false);
     boolean[] used = new boolean[length];
 
@@ -83,15 +83,15 @@ public class GeneticAlgorithm {
     }
 
     for (int i = start; i <= end; i++) {
-      child.permutation[i] = father.permutation[i];
-      used[Math.abs(father.permutation[i]) - 1] = true;
+      child.getPermutation()[i] = father.getPermutation()[i];
+      used[Math.abs(father.getPermutation()[i]) - 1] = true;
     }
 
     int index = (end + 1) % length;
     for (int i = 0; i < length; i++) {
-      int gene = mother.permutation[(end + 1 + i) % length];
+      int gene = mother.getPermutation()[(end + 1 + i) % length];
       if (!used[Math.abs(gene) - 1]) {
-        child.permutation[index] = gene;
+        child.getPermutation()[index] = gene;
         used[Math.abs(gene) - 1] = true;
         index = (index + 1) % length;
       }

@@ -12,8 +12,7 @@ public class MainFrame extends javax.swing.JFrame {
 	int materialHeight;
 
 	List<Rectangle> rectangles = new ArrayList<Rectangle>();
-	int c = 1;
-	Population population;
+	int rectCount = 1;
 
 	public MainFrame() {
 		initComponents();
@@ -350,13 +349,6 @@ public class MainFrame extends javax.swing.JFrame {
 		initLienzo(materialWidth * 10, materialHeight * 10);
 	}
 
-	private static int[] naturalPerm(int x) {
-		int[] ans = new int[x];
-		for (int i = 0; i < ans.length; i++)
-			ans[i] = i + 1;
-		return ans;
-	}
-
 	private void piezaButtonActionPerformed(java.awt.event.ActionEvent evt) {
 		int width = Integer.parseInt(xPiezaField.getText());
 		int height = Integer.parseInt(yPiezaField.getText());
@@ -364,15 +356,13 @@ public class MainFrame extends javax.swing.JFrame {
 		xPiezaField.setText("");
 		yPiezaField.setText("");
 		// add item to list
-		itemDisplay.add(c + ".- " + "[" + width + "*" + height + "]");
-		rectangles.add(new Rectangle(c++, width, height));
+		rectangles.add(new Rectangle(width, height));
+		itemDisplay.add((rectCount++) + ".- " + "[" + width + "*" + height + "]");
 
-		Individual individual = new Individual(naturalPerm(rectangles.size()));
-		int[][] material = new int[materialHeight][materialWidth];
-		material = getPattern(individual, rectangles, materialWidth, materialHeight);
-		individual.setFitness(fitnessFunction(material));
-		lienzo.dibujarMatriz(material, rectangles.size());
-		mensaje.setText("Fitness " + String.format("%.2f", individual.fitness) + "%");
+		Individual individual = new Individual(rectangles.size(), false);
+		individual.evaluate(rectangles, materialWidth, materialHeight);
+		lienzo.dibujarMatriz(individual.getMaterial(), rectangles.size());
+		mensaje.setText("Fitness " + String.format("%.2f", individual.getFitness()) + "%");
 		// enable genetic algorithm area
 		optimizaButton.setEnabled(true);
 		generationsField.setEnabled(true);
@@ -386,220 +376,13 @@ public class MainFrame extends javax.swing.JFrame {
 		populationSize = Integer.parseInt(populationField.getText());
 		mutationProbability = Double.parseDouble(mutationField.getText());
 
-		// here starts the genetic algorithm located in GeneticAlgorithm.java
+		GeneticAlgorithm geneticAlgorithm = new GeneticAlgorithm(rectangles, materialWidth, materialHeight);
+		Individual bestIndividual = geneticAlgorithm.performGeneticAlgorithm(mutationProbability, numberOfGenerations,
+				populationSize);
 
-		Population population = new Population(populationSize, rectangles.size());
-		int[][] material = new int[materialHeight][materialWidth];
-
-		for (int generation = 0; generation < numberOfGenerations; generation++) {
-			// Evaluation
-			for (Individual individual : population.getIndividuals()) {// temp material needed!!!!
-				material = getPattern(individual, rectangles, materialWidth, materialHeight);
-				individual.setFitness(fitnessFunction(material));
-			}
-			// selection
-			sortPopulationByFitness(population.getIndividuals());
-			List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));// to select the
-																																																				// best 10% of
-																																																				// the
-																																																				// population
-			double totalFitness = getTotalFitness(population.getIndividuals());
-
-			// crossover
-			while (selected.size() < populationSize) {
-				Individual father = roulette(population.getIndividuals(), totalFitness);
-				Individual mother = roulette(population.getIndividuals(), totalFitness);
-				int[] childPermutation = crossover(father.getPermutation(), mother.getPermutation());
-				Individual child = new Individual(childPermutation);
-				// add the newborn to the selected individuals
-				selected.add(child);
-			}
-
-			// mutation
-			mutation(selected, mutationProbability);
-
-			// update the new generation
-			population.individuals = selected;
-		}
-
-		// printing the best individual from the final population
-		// printing results section may vary from the code in GeneticAlgorithm.java
-		// here seem to be an error, when pressing more than once the optimize button
-		// !!!!
-		sortPopulationByFitness(population.getIndividuals());
-		Individual bestIndividual = population.getIndividuals().get(0);
-		material = getPattern(bestIndividual, rectangles, materialWidth, materialHeight);
-		lienzo.dibujarMatriz(material, rectangles.size());
-		mensaje.setText("Fitness " + String.format("%.2f", bestIndividual.fitness) + "%");
+		lienzo.dibujarMatriz(bestIndividual.getMaterial(), rectangles.size());
+		mensaje.setText("Fitness " + String.format("%.2f", bestIndividual.getFitness()) + "%");
 	}
-
-	private static void sortPopulationByFitness(List<Individual> population) {
-		Collections.sort(population, Comparator.comparingDouble(Individual::getFitness).reversed());
-	}
-
-	private static void mutation(List<Individual> individuals, double probability) {
-		Random random = new Random();
-		for (Individual individual : individuals)
-			if (random.nextDouble() < probability)
-				individual.mutates();
-	}
-
-	private static double getTotalFitness(List<Individual> individuals) {
-		double totalFitness = 0;
-		for (Individual individual : individuals)
-			totalFitness += individual.getFitness();
-		return totalFitness;
-	}
-
-	private static Individual roulette(List<Individual> population, double totalFitness) {
-		Random random = new Random();
-		double randomNumber = random.nextDouble() * totalFitness;// check interval!!!!
-		double currentSum = 0;
-
-		for (Individual individual : population) {
-			currentSum += individual.getFitness();
-			if (currentSum >= randomNumber)
-				return individual;
-		}
-		return population.get(random.nextInt(population.size()));
-	}
-
-	public static int[] crossover(int[] father, int[] mother) {// check!!!! cambiar por OX
-		Random random = new Random();
-		int length = father.length;
-		int partition = random.nextInt(length / 2);
-		int[] child = new int[father.length];
-
-		for (int i = 0; i < father.length / 2; i++)
-			child[i] = father[partition + i];
-
-		for (int i = length / 2; i < length; i++)
-			for (int motherGen : mother)
-				if (i == length)
-					break;
-				else {
-					boolean isIn = false;
-					for (int childGen : child)
-						if (childGen == 0)
-							break;
-						else if (motherGen == childGen) {
-							isIn = true;
-							break;
-						}
-					if (!isIn)
-						child[i++] = motherGen;
-				}
-		return child;
-	}
-
-	private static int[][] getPattern(Individual individual, List<Rectangle> rectangles, int materialWidth,
-			int materialHeight) {
-		int[][] material = new int[materialHeight][materialWidth];
-		DoubleLinkedList list = new DoubleLinkedList();
-		list.addFirst(0, 0);
-		Node pos = list.head;
-		for (int rectId : individual.permutation) {
-			Rectangle rectangle = rectangles.get(rectId - 1);
-			if (individual.rotations[rectId - 1])
-				rectangle = rotated(rectangle);
-			while (pos != null)
-				if (fits(material, pos, rectangle, list)) {
-					int[] xy = placeRectangle(material, pos.x, pos.y, rectangle);
-					addExtremes(list, material, xy);
-					list.delete(pos);
-					pos = list.head;
-					break;
-				} else {
-					pos = list.tail;
-					if (pos != null)
-						while (!fits(material, pos, rectangle, list)) {
-							pos = pos.prev;
-							if (pos == null) {
-								material[0][0] = -1;// rectangle doesn't fit
-								break;
-							}
-						}
-				}
-		}
-		return material;
-	}
-
-	private static Rectangle rotated(Rectangle r) {
-		return new Rectangle(r.id, r.height, r.width);
-	}
-
-	private static boolean isEmptyRow(int[] row) {
-		for (int value : row)
-			if (value != 0)
-				return false;
-		return true;
-	}
-
-	private static double fitnessFunction(int[][] material) {
-		if (material[0][0] == -1)
-			return 0;// doesn't satisfy problem requirements
-		double totalArea = material[0].length * material.length;
-		double enclosedArea = 0;
-		for (int i = 0; i < material.length; i++)
-			for (int j = 0; j < material[0].length; j++) {
-				if (isEmptyRow(material[i])) {
-				} else if (material[i][j] == 0)
-					enclosedArea++;
-			}
-
-		double ans = 100 - ((enclosedArea / totalArea) * 100);
-		return ans;
-	}
-
-	private static void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// heuristic
-		// esto es al reves? check!!!!
-		int x = xy[0];
-		int y = xy[1];
-		if (xy[1] < material.length) {
-			if (x != 0)
-				while (material[xy[1]][x - 1] == 0 && x >= 0) {
-					x--;
-					if (x == 0)
-						break;
-				}
-			if (x != xy[0])
-				list.addFirst(x, xy[1]);
-		}
-		if (xy[0] < material[0].length) {
-			if (y != 0)
-				while (material[y - 1][xy[0]] == 0 && y >= 0) {
-					y--;
-					if (y == 0)
-						break;
-				}
-			if (y != xy[1])
-				list.addFirst(xy[0], y);
-		}
-	}
-
-	private static boolean fits(int[][] material, Node pos, Rectangle rectangle, DoubleLinkedList list) {
-		if (material[pos.y][pos.x] != 0) {
-			list.delete(pos);
-			return false;
-		}
-		if (pos.y + rectangle.height > material.length || pos.x + rectangle.width > material[0].length)
-			return false;
-		for (int i = pos.y; i < pos.y + rectangle.height; i++)
-			for (int j = pos.x; j < pos.x + rectangle.width; j++)
-				if (material[i][j] != 0)
-					return false;
-		return true;
-	}
-
-	private static int[] placeRectangle(int[][] material, int x, int y, Rectangle rectangle) {
-		int[] ans = { x + rectangle.width, y + rectangle.height };
-		for (int i = y; i < y + rectangle.height; i++)
-			for (int j = x; j < x + rectangle.width; j++)
-				material[i][j] = rectangle.id;
-
-		return ans;
-	}
-	// here ends the genetic algorithm located in GeneticAlgorithm.java
 
 	// Variables declaration - do not modify
 	private javax.swing.JPanel ajustesPanel;

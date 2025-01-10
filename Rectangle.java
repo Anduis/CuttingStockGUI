@@ -1,6 +1,6 @@
 public class Rectangle {
-  int width;
-  int height;
+  private int width;
+  private int height;
 
   public Rectangle(int width, int height) {
     this.width = width;
@@ -10,5 +10,13 @@ public class Rectangle {
   public Rectangle(Rectangle other) { // copy constructor
     this.width = other.width;
     this.height = other.height;
+  }
+
+  public int getWidth() {
+    return width;
+  }
+
+  public int getHeight() {
+    return height;
   }
 }

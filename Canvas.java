@@ -11,7 +11,7 @@ public class Canvas extends JPanel {
 
   public Canvas() {
     matriz = new int[1][1];
-    colores = generarColores(20);
+    colores = generarColores(15);
   }
 
   public void dibujarMatriz(int[][] m, int numRectangulos) {

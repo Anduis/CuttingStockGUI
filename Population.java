@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.ArrayList;
 
 public class Population {
-  List<Individual> individuals;
+  private List<Individual> individuals;
 
   public Population(int populationSize, int numberOfRectangles) {// initialize the population with random individuals
     individuals = new ArrayList<>();
@@ -14,6 +14,10 @@ public class Population {
     for (int i = 0; i < populationSize - 1; i++) {
       individuals.add(new Individual(numberOfRectangles, true));
     }
+  }
+
+  public void newGeneration(List<Individual> newGeneration) {// update the population with the new generation
+    individuals = newGeneration;
   }
 
   public List<Individual> getIndividuals() {// return the individuals as a list
