@@ -17,10 +17,11 @@ public class GeneticAlgorithm {
     for (int generation = 0; generation < numberOfGenerations; generation++) {
       // Evaluation
       for (Individual individual : population.getIndividuals()) {
-        individual.getPattern(rectangles, materialWidth, materialHeight);
+        individual.evaluate(rectangles, materialWidth, materialHeight);
       }
       // selection
       population.sortPopulationByFitness();
+      // add a percentage of the best individuals to the selected individuals by elitism
       List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));
       double totalFitness = population.getTotalFitness();
 
@@ -81,18 +82,15 @@ public class GeneticAlgorithm {
 
     for (int i = start; i <= end; i++) {
       child.permutation[i] = father.permutation[i];
-      child.rotations[i] = father.rotations[i];
-      used[father.permutation[i] - 1] = true;
+      used[Math.abs(father.permutation[i]) - 1] = true;
     }
 
     int index = (end + 1) % child.permutation.length;
     for (int i = 0; i < mother.permutation.length; i++) {
       int gene = mother.permutation[(end + 1 + i) % child.permutation.length];
-      boolean geneB = mother.rotations[(end + 1 + i) % child.rotations.length];
-      if (!used[gene - 1]) {
+      if (!used[Math.abs(gene) - 1]) {
         child.permutation[index] = gene;
-        child.rotations[index] = geneB;
-        used[gene - 1] = true;
+        used[Math.abs(gene) - 1] = true;
         index = (index + 1) % child.permutation.length;
       }
     }

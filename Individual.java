@@ -4,68 +4,55 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Individual {
-  int[] permutation;
-  boolean[] rotations;
-  double fitness;
-  int[][] material;
+  // represents the order in which the rectangles are placed in the material
+  int[] permutation;// genotype. if any value is negative, that rectangle is rotated
+  double fitness;// from 0 to 100
+  int[][] material;// phenotype. if first cell is -1, doesn't satisfy the requirements
 
-  public Individual(int x, boolean random) { 
+  public Individual(int x, boolean random) {
     if (random)
       this.permutation = generateRandomPermutation(x);
     else
       this.permutation = naturalPerm(x);
-    rotations = new boolean[x];
   }
 
   public int[] getPermutation() {
     return permutation;
   }
 
-  void setFitness() {// doesn't work as expected
-    if (material[0][0] == -1)
-      fitness = 0;// doesn't satisfy problem requirements
-    double totalArea = material[0].length * material.length;
-    double enclosedArea = 0;
-    for (int[] row : material)
-      if (!isEmptyRow(row))
-        for (int cell : row)
-          if (cell == 0)
-            enclosedArea++;
-    fitness = (100 - ((enclosedArea / totalArea) * 100));
-  }
-
-  public static boolean isEmptyRow(int[] row) {
-    for (int value : row)
-      if (value != 0)
-        return false;
-    return true;
-  }
-
   public double getFitness() {
     return fitness;
   }
 
-  public void mutates() {// needs to get new fitness and material
+  public int[][] getMaterial() {
+    return material;
+  }
+
+  public void mutates() {// rotates a random rectangle
     Random random = new Random();
     int index = random.nextInt(permutation.length);
-    rotations[index] = !rotations[index];
+    permutation[index] = -permutation[index];
   }
 
   // heuristic code begins here
-
-  public void getPattern(List<Rectangle> rectangles, int materialWidth, int materialHeight) {
+  public void evaluate(List<Rectangle> rectangles, int materialWidth, int materialHeight) {
     material = new int[materialHeight][materialWidth];
     int[][] temp = new int[materialHeight][materialWidth];
     DoubleLinkedList list = new DoubleLinkedList();
     list.addFirst(0, 0);
     Node pos = list.head;
-    for (int rectId : permutation) {
-      Rectangle rectangle = rectangles.get(rectId - 1);
-      if (rotations[rectId - 1])
-        rectangle = rotated(rectangle);
+    for (int rectIndex : permutation) {
+      boolean isRotated = false;
+      if (rectIndex < 0) {
+        isRotated = true;
+        rectIndex = -rectIndex;// make it positive
+      }
+      Rectangle rectangle = new Rectangle(rectangles.get(rectIndex - 1));
+      if (isRotated)
+        rectangle = new Rectangle(r.height, r.width);// swap width and height so it's rotated
       while (pos != null)
         if (fits(temp, pos, rectangle, list)) {
-          int[] xy = placeRectangle(temp, pos.x, pos.y, rectangle);
+          int[] xy = placeRectangle(temp, pos.x, pos.y, rectangle, rectIndex);
           addExtremes(list, temp, xy);
           list.delete(pos);
           pos = list.head;
@@ -83,11 +70,25 @@ public class Individual {
         }
     }
     material = temp;
-    setFitness();
-  }
-
-  public Rectangle rotated(Rectangle r) {
-    return new Rectangle(r.id, r.height, r.width);
+    // calculate fitness
+    if (material[0][0] == -1) {// doesn't satisfy problem requirements
+      fitness = 0;
+      return;
+    }
+    double usedArea = 0;
+    double enclosedArea = 0;// area below the highest edge of the highest rectangle
+    for (int[] row : material) {
+      boolean isEmptyRow = true;
+      for (int cell : row)
+        if (cell != 0) {
+          isEmptyRow = false;
+          usedArea++;
+        } else
+          enclosedArea++;
+      if (isEmptyRow)
+        enclosedArea -= row.length;
+    }
+    fitness = ((usedArea / (usedArea + enclosedArea)) * 100);
   }
 
   public void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// heuristic
@@ -130,11 +131,11 @@ public class Individual {
     return true;
   }
 
-  public int[] placeRectangle(int[][] material, int x, int y, Rectangle rectangle) {
+  public int[] placeRectangle(int[][] material, int x, int y, Rectangle rectangle, int index) {
     int[] ans = { x + rectangle.width, y + rectangle.height };
     for (int i = y; i < y + rectangle.height; i++)
       for (int j = x; j < x + rectangle.width; j++)
-        material[i][j] = rectangle.id;
+        material[i][j] = index;
 
     return ans;
   }

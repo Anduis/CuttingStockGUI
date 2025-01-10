@@ -10,7 +10,7 @@ public class Main {
     double mutationProbability = 0.5;
     int numberOfGenerations = 100;
     int populationSize = 100;
-    int i = 1;
+    int rectCount = 1;
     List<Rectangle> rectangles = new ArrayList<Rectangle>();
 
     Scanner sc = new Scanner(System.in);
@@ -26,11 +26,11 @@ public class Main {
       }
       int width = Integer.parseInt(input);
       int height = sc.nextInt();
-      rectangles.add(new Rectangle(i++, width, height));
-      System.out.println("Rectangle " + (i - 1) + " added with width " + width + " and height " + height);
+      rectangles.add(new Rectangle(width, height));
+      System.out.println("Rectangle " + (rectCount++) + " added with width " + width + " and height " + height);
       Individual individual = new Individual(rectangles.size(), false);
-      individual.getPattern(rectangles, materialWidth, materialHeight);
-      printMaterial(individual.material);
+      individual.evaluate(rectangles, materialWidth, materialHeight);
+      printMaterial(individual.getMaterial());
       System.out.println("fitness " + individual.getFitness());
       System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     }
@@ -39,7 +39,7 @@ public class Main {
         populationSize);
 
     System.out.println(bestIndividual.getFitness() + " mejor");
-    printMaterial(bestIndividual.material);
+    printMaterial(bestIndividual.getMaterial());
 
   }
 
