@@ -9,6 +9,9 @@ public class DoubleLinkedList {
   }
 
   public void addFirst(int x, int y) {
+    /* if (isIn(x, y))// the node is already in the list
+      return; */ //check what difference it makes
+
     Node newNode = new Node(x, y);
 
     if (head == null)
@@ -20,16 +23,14 @@ public class DoubleLinkedList {
     }
   }
 
-  public void addLast(int x, int y) {
-    Node newNode = new Node(x, y);
-
-    if (head == null)
-      head = tail = newNode;
-    else {
-      newNode.prev = tail;
-      tail.next = newNode;
-      tail = newNode;
+  public boolean isIn(int x, int y) {
+    Node current = head;
+    while (current != null) {
+      if (current.x == x && current.y == y)
+        return true;
+      current = current.next;
     }
+    return false;
   }
 
   public void delete(Node n) {
@@ -48,7 +49,7 @@ public class DoubleLinkedList {
           actual.next.prev = actual.prev;
         else
           tail = actual.prev;
-
+        /* return; */
       }
 
       actual = actual.next;

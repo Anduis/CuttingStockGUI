@@ -14,14 +14,15 @@ public class GeneticAlgorithm {
 
   public Individual performGeneticAlgorithm(double mutationProbability, int numberOfGenerations, int populationSize) {
     Population population = new Population(populationSize, rectangles.size());
-    for (int generation = 0; generation < numberOfGenerations; generation++) {
+    for (int generation = 0; generation < numberOfGenerations; generation++) {//add stop condition fit 100
       // Evaluation
       for (Individual individual : population.getIndividuals()) {
         individual.evaluate(rectangles, materialWidth, materialHeight);
       }
       // selection
       population.sortPopulationByFitness();
-      // add a percentage of the best individuals to the selected individuals by elitism
+      // add a percentage of the best individuals to the selected individuals by
+      // elitism
       List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));
       double totalFitness = population.getTotalFitness();
 
@@ -41,7 +42,7 @@ public class GeneticAlgorithm {
       population.individuals = selected;
     }
 
-    // printing the best individual from the final population
+    // return the best individual from the final population
     population.sortPopulationByFitness();
     return population.getIndividuals().get(0);
   }
@@ -66,15 +67,16 @@ public class GeneticAlgorithm {
     return population.get(random.nextInt(population.size()));
   }
 
-  public Individual crossover(Individual father, Individual mother) {
-    Individual child = new Individual(father.permutation.length, false);
-    boolean[] used = new boolean[father.permutation.length];
+  public Individual crossover(Individual father, Individual mother) {// order crossover
+    int length = father.permutation.length; // length of the permutation is the same any individual
+    Individual child = new Individual(length, false);
+    boolean[] used = new boolean[length];
 
     Random random = new Random();
-    int start = random.nextInt(child.permutation.length);
-    int end = random.nextInt(child.permutation.length);
+    int start = random.nextInt(length);
+    int end = random.nextInt(length);
 
-    if (start > end) {
+    if (start > end) {// to ensure that start is at the left of end
       int temp = start;
       start = end;
       end = temp;
@@ -85,13 +87,13 @@ public class GeneticAlgorithm {
       used[Math.abs(father.permutation[i]) - 1] = true;
     }
 
-    int index = (end + 1) % child.permutation.length;
-    for (int i = 0; i < mother.permutation.length; i++) {
-      int gene = mother.permutation[(end + 1 + i) % child.permutation.length];
+    int index = (end + 1) % length;
+    for (int i = 0; i < length; i++) {
+      int gene = mother.permutation[(end + 1 + i) % length];
       if (!used[Math.abs(gene) - 1]) {
         child.permutation[index] = gene;
         used[Math.abs(gene) - 1] = true;
-        index = (index + 1) % child.permutation.length;
+        index = (index + 1) % length;
       }
     }
     return child;

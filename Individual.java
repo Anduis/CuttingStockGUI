@@ -34,43 +34,7 @@ public class Individual {
     permutation[index] = -permutation[index];
   }
 
-  // heuristic code begins here
-  public void evaluate(List<Rectangle> rectangles, int materialWidth, int materialHeight) {
-    material = new int[materialHeight][materialWidth];
-    int[][] temp = new int[materialHeight][materialWidth];
-    DoubleLinkedList list = new DoubleLinkedList();
-    list.addFirst(0, 0);
-    Node pos = list.head;
-    for (int rectIndex : permutation) {
-      boolean isRotated = false;
-      if (rectIndex < 0) {
-        isRotated = true;
-        rectIndex = -rectIndex;// make it positive
-      }
-      Rectangle rectangle = new Rectangle(rectangles.get(rectIndex - 1));
-      if (isRotated)
-        rectangle = new Rectangle(r.height, r.width);// swap width and height so it's rotated
-      while (pos != null)
-        if (fits(temp, pos, rectangle, list)) {
-          int[] xy = placeRectangle(temp, pos.x, pos.y, rectangle, rectIndex);
-          addExtremes(list, temp, xy);
-          list.delete(pos);
-          pos = list.head;
-          break;
-        } else {
-          pos = list.tail;
-          if (pos != null)
-            while (!fits(temp, pos, rectangle, list)) {
-              pos = pos.prev;
-              if (pos == null) {
-                temp[0][0] = -1;// rectangle doesn't fit
-                break;
-              }
-            }
-        }
-    }
-    material = temp;
-    // calculate fitness
+  public void calculateFitness() {
     if (material[0][0] == -1) {// doesn't satisfy problem requirements
       fitness = 0;
       return;
@@ -91,8 +55,44 @@ public class Individual {
     fitness = ((usedArea / (usedArea + enclosedArea)) * 100);
   }
 
-  public void addExtremes(DoubleLinkedList list, int[][] material, int[] xy) {// heuristic
-    // esto es al reves? check!!!!
+  // heuristic code begins here
+  public void evaluate(List<Rectangle> rectangles, int materialWidth, int materialHeight) {
+    this.material = new int[materialHeight][materialWidth];
+    DoubleLinkedList list = new DoubleLinkedList();
+    list.addFirst(0, 0);
+    Node pos = list.head;
+    for (int rectIndex : permutation) {
+      boolean isRotated = false;
+      if (rectIndex < 0) {
+        isRotated = true;
+        rectIndex = -rectIndex;// make it positive
+      }
+      Rectangle rectangle = new Rectangle(rectangles.get(rectIndex - 1));
+      if (isRotated)
+        rectangle = new Rectangle(rectangle.height, rectangle.width);// swap width and height so it's rotated
+      while (pos != null)
+        if (fits(pos, rectangle, list)) {
+          int[] xy = placeRectangle(pos.x, pos.y, rectangle, rectIndex);
+          addExtremes(list, xy);
+          list.delete(pos);
+          pos = list.head;
+          break;
+        } else {// traverse the list bakwards until a position is found
+          pos = list.tail;
+          if (pos != null)
+            while (!fits(pos, rectangle, list)) {
+              pos = pos.prev;
+              if (pos == null) {
+                material[0][0] = -1;// rectangle doesn't fit
+                break;
+              }
+            }
+        }
+    }
+    calculateFitness();
+  }
+
+  public void addExtremes(DoubleLinkedList list, int[] xy) {
     int x = xy[0];
     int y = xy[1];
     if (xy[1] < material.length) {
@@ -103,7 +103,7 @@ public class Individual {
             break;
         }
       if (x != xy[0])
-        list.addFirst(x, xy[1]);
+        list.addFirst(x, xy[1]);// where x coordinate collides
     }
     if (xy[0] < material[0].length) {
       if (y != 0)
@@ -113,12 +113,12 @@ public class Individual {
             break;
         }
       if (y != xy[1])
-        list.addFirst(xy[0], y);
+        list.addFirst(xy[0], y);// where y coordinate collides
     }
   }
 
-  public boolean fits(int[][] material, Node pos, Rectangle rectangle, DoubleLinkedList list) {
-    if (material[pos.y][pos.x] != 0) {
+  public boolean fits(Node pos, Rectangle rectangle, DoubleLinkedList list) {
+    if (material[pos.y][pos.x] != 0) {// the position is already occupied
       list.delete(pos);
       return false;
     }
@@ -131,13 +131,13 @@ public class Individual {
     return true;
   }
 
-  public int[] placeRectangle(int[][] material, int x, int y, Rectangle rectangle, int index) {
-    int[] ans = { x + rectangle.width, y + rectangle.height };
-    for (int i = y; i < y + rectangle.height; i++)
-      for (int j = x; j < x + rectangle.width; j++)
-        material[i][j] = index;
+  public int[] placeRectangle(int leftMostX, int lowerY, Rectangle rectangle, int id) {
+    int[] xy = { leftMostX + rectangle.width, lowerY + rectangle.height };// top right corner after placement
+    for (int i = lowerY; i < xy[1]; i++)
+      for (int j = leftMostX; j < xy[0]; j++)
+        material[i][j] = id;
 
-    return ans;
+    return xy;
   }
 
   // heuristic code ends here

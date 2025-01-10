@@ -38,8 +38,8 @@ public class Main {
     Individual bestIndividual = geneticAlgorithm.performGeneticAlgorithm(mutationProbability, numberOfGenerations,
         populationSize);
 
-    System.out.println(bestIndividual.getFitness() + " mejor");
     printMaterial(bestIndividual.getMaterial());
+    System.out.println("best individual fitness " + bestIndividual.getFitness());
 
   }
 
