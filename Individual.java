@@ -141,7 +141,6 @@ public class Individual {
 
     return xy;
   }
-
   // heuristic code ends here
 
   private static int[] naturalPerm(int x) {

@@ -51,7 +51,7 @@ public class GeneticAlgorithm {
   private void mutation(List<Individual> individuals, double probability) {
     Random random = new Random();
     for (Individual individual : individuals)
-      if (random.nextDouble() < probability)
+      if (random.nextDouble() <= probability)
         individual.mutates();
   }
 
