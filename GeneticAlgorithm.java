@@ -14,23 +14,24 @@ public class GeneticAlgorithm {
 
   public Individual performGeneticAlgorithm(double mutationProbability, int numberOfGenerations, int populationSize) {
     Population population = new Population(populationSize, rectangles.size());
-    for (int generation = 0; generation < numberOfGenerations; generation++) {//add stop condition fit 100
+
+    for (int generation = 0; generation < numberOfGenerations; generation++) {
       // Evaluation
-      for (Individual individual : population.getIndividuals()) {
+      for (Individual individual : population.getIndividuals())
         individual.evaluate(rectangles, materialWidth, materialHeight);
-      }
-      // selection
       population.sortPopulationByFitness();
-      // add a percentage of the best individuals to the selected individuals by
-      // elitism
-      List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.1));
+
+      // selection
+      List<Individual> selected = population.getIndividuals().subList(0, (int) (populationSize * 0.15));
+      // added a 20% of the individuals to the selection by elitism
       double totalFitness = population.getTotalFitness();
+      // rest of the individuals are selected by roulette for mating
 
       // crossover
       while (selected.size() < populationSize) {
         Individual father = roulette(population.getIndividuals(), totalFitness);
         Individual mother = roulette(population.getIndividuals(), totalFitness);
-        Individual child = crossover(father, mother);
+        Individual child = orderCrossover(father, mother);
         // add the newborn to the selected individuals
         selected.add(child);
       }
@@ -56,7 +57,7 @@ public class GeneticAlgorithm {
 
   private Individual roulette(List<Individual> population, double totalFitness) {
     Random random = new Random();
-    double randomNumber = random.nextDouble() * totalFitness;// check interval!!!!
+    double randomNumber = random.nextDouble() * totalFitness;
     double currentSum = 0;
 
     for (Individual individual : population) {
@@ -67,8 +68,8 @@ public class GeneticAlgorithm {
     return population.get(random.nextInt(population.size()));
   }
 
-  private Individual crossover(Individual father, Individual mother) {// order crossover
-    int length = father.getPermutation().length; // length of the permutation is the same any individual
+  private Individual orderCrossover(Individual father, Individual mother) {
+    int length = father.getPermutation().length;
     Individual child = new Individual(length, false);
     boolean[] used = new boolean[length];
 
