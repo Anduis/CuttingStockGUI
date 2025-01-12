@@ -10,7 +10,6 @@ public class Main {
     double mutationProbability = 0.06;
     int numberOfGenerations = 1000;
     int populationSize = 50;
-    int rectCount = 1;
     List<Rectangle> rectangles = new ArrayList<Rectangle>();
 
     Scanner sc = new Scanner(System.in);
@@ -35,24 +34,7 @@ public class Main {
     Individual bestIndividual = geneticAlgorithm.performGeneticAlgorithm(mutationProbability, numberOfGenerations,
     populationSize);
     
-    //printMaterial(bestIndividual.getMaterial());
     System.out.println(percentageAboveOptimal(optimalHeight, highestOccupiedRow(bestIndividual.getMaterial())));
-    //System.out.println("highest occupied row " + highestOccupiedRow(bestIndividual.getMaterial()));
-    //System.out.println("optimal height " + optimalHeight);
-
-  }
-
-  private static void printMaterial(int[][] material) {
-    for (int i = material.length - 1; i >= 0; i--) {
-      System.out.print(i + "|\t");
-      for (int j = 0; j < material[0].length; j++)
-        System.out.print(material[i][j] + "\t");
-      System.out.println();
-    }
-    for (int i = 0; i < material[0].length; i++) {
-      System.out.print("\t" + i);
-    }
-    System.out.println();
   }
 
   private static int highestOccupiedRow(int[][] material) {

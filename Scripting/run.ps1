@@ -1,6 +1,6 @@
 $javaFilePath = "c:/Users/amap/Actual/CuttingStockGUI/Scripting/Main.java"
-$inputFolder = "c:/Users/amap/Actual/CuttingStockGUI/Scripting/txt"
-$outputFolder = "c:/Users/amap/Actual/CuttingStockGUI/Scripting/out"
+$inputFolder = "c:/Users/amap/Actual/CuttingStockGUI/Scripting/sorted_txt"
+$outputFolder = "c:/Users/amap/Actual/CuttingStockGUI/Scripting/outSorted"
 
 # Crear la carpeta de salida si no existe
 if (-not (Test-Path -Path $outputFolder)) {
@@ -23,7 +23,7 @@ foreach ($file in $txtFiles) {
     for ($i = 1; $i -le 10; $i++) {
         Write-Host "  Ejecución $i para $file.Name"
         $input = Get-Content -Path $file.FullName
-        $output = $input | java -Xms4g -Xmx16g -XX:+UseG1GC -XX:ParallelGCThreads=8 Main
+        $output = $input | java -Xms8g -Xmx14g -XX:+UseG1GC -XX:ParallelGCThreads=10 Main
         $output | Out-File -FilePath $outputFilePath -Append
     }
     Write-Host "  Procesamiento completado para $file.Name"
